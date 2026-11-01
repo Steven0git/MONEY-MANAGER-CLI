@@ -540,10 +540,24 @@ show_transaction_logs() {
         echo -e "\t│ Expense Change : $change_display"
         echo -e "\t└────────────────────────────────────────────────────────┘\n"
 
+        # LIST TRANSACTION
+        echo -e "\t  📋 LIST TRANSACTION ($display_period):"
+        sqlite3 "$DB_FILE" "SELECT id, type, date, title, amount FROM transactions WHERE strftime('%Y-%m', date) = '$period' ORDER BY date ASC;" | while IFS='|' read -r tid ttype tdate ttitle tamount; do
+            f_tamt=$(format_money "$tamount" "IDR")
+            if [ "$ttype" == "income" ]; then
+                t_badge="${GREEN}[INCOME]${NC}"
+            elif [ "$ttype" == "expense" ]; then
+                t_badge="${RED}[EXPENSE]${NC}"
+            else
+                t_badge="${BLUE}[TRANSFER]${NC}"
+            fi
+            echo -e "\t    • [ID: $tid] $t_badge  $tdate  |  $ttitle  ➔  $f_tamt"
+        done
+        
         prev_exp=$exp
     done <<< "$periods"
 
-    echo -ne "\tPress [Enter] to return..."
+    echo -ne "\n\n\tPress [Enter] to return..."
     read -r
 }
 
